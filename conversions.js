@@ -1,18 +1,20 @@
 /* MIT license */
-var cssKeywords = require('color-name');
+const cssKeywords = require('color-name');
+// subset for color classes
+const colors16 = ['aqua', 'black', 'blue', 'fuchsia', 'gray', 'green', 'lime', 'maroon', 'navy', 'olive', 'purple', 'red', 'silver', 'teal', 'white', 'yellow'];
 
 // NOTE: conversions should only return primitive values (i.e. arrays, or
 //       values that give correct `typeof` results).
 //       do not use box values types (i.e. Number(), String(), etc.)
 
-var reverseKeywords = {};
-for (var key in cssKeywords) {
+const reverseKeywords = {};
+for (let key in cssKeywords) {
 	if (cssKeywords.hasOwnProperty(key)) {
 		reverseKeywords[cssKeywords[key]] = key;
 	}
 }
 
-var convert = module.exports = {
+const convert = module.exports = {
 	rgb: {channels: 3, labels: 'rgb'},
 	hsl: {channels: 3, labels: 'hsl'},
 	hsv: {channels: 3, labels: 'hsv'},
@@ -23,6 +25,7 @@ var convert = module.exports = {
 	lch: {channels: 3, labels: 'lch'},
 	hex: {channels: 1, labels: ['hex']},
 	keyword: {channels: 1, labels: ['keyword']},
+  keyword16: {channels: 1, labels: ['keyword16']},
 	ansi16: {channels: 1, labels: ['ansi16']},
 	ansi256: {channels: 1, labels: ['ansi256']},
 	hcg: {channels: 3, labels: ['h', 'c', 'g']},
@@ -31,7 +34,7 @@ var convert = module.exports = {
 };
 
 // hide .channels and .labels properties
-for (var model in convert) {
+for (let model in convert) {
 	if (convert.hasOwnProperty(model)) {
 		if (!('channels' in convert[model])) {
 			throw new Error('missing channels property: ' + model);
@@ -45,8 +48,8 @@ for (var model in convert) {
 			throw new Error('channel and label counts mismatch: ' + model);
 		}
 
-		var channels = convert[model].channels;
-		var labels = convert[model].labels;
+    let channels = convert[model].channels;
+    let labels = convert[model].labels;
 		delete convert[model].channels;
 		delete convert[model].labels;
 		Object.defineProperty(convert[model], 'channels', {value: channels});
@@ -55,15 +58,15 @@ for (var model in convert) {
 }
 
 convert.rgb.hsl = function (rgb) {
-	var r = rgb[0] / 255;
-	var g = rgb[1] / 255;
-	var b = rgb[2] / 255;
-	var min = Math.min(r, g, b);
-	var max = Math.max(r, g, b);
-	var delta = max - min;
-	var h;
-	var s;
-	var l;
+	let r = rgb[0] / 255;
+	let g = rgb[1] / 255;
+	let b = rgb[2] / 255;
+	let min = Math.min(r, g, b);
+	let max = Math.max(r, g, b);
+	let delta = max - min;
+	let h;
+	let s;
+	let l;
 
 	if (max === min) {
 		h = 0;
@@ -95,15 +98,15 @@ convert.rgb.hsl = function (rgb) {
 };
 
 convert.rgb.hsv = function (rgb) {
-	var r = rgb[0];
-	var g = rgb[1];
-	var b = rgb[2];
-	var min = Math.min(r, g, b);
-	var max = Math.max(r, g, b);
-	var delta = max - min;
-	var h;
-	var s;
-	var v;
+	let r = rgb[0];
+	let g = rgb[1];
+	let b = rgb[2];
+	let min = Math.min(r, g, b);
+	let max = Math.max(r, g, b);
+	let delta = max - min;
+	let h;
+	let s;
+	let v;
 
 	if (max === 0) {
 		s = 0;
@@ -133,11 +136,11 @@ convert.rgb.hsv = function (rgb) {
 };
 
 convert.rgb.hwb = function (rgb) {
-	var r = rgb[0];
-	var g = rgb[1];
-	var b = rgb[2];
-	var h = convert.rgb.hsl(rgb)[0];
-	var w = 1 / 255 * Math.min(r, Math.min(g, b));
+	let r = rgb[0];
+	let g = rgb[1];
+	let b = rgb[2];
+	let h = convert.rgb.hsl(rgb)[0];
+	let w = 1 / 255 * Math.min(r, Math.min(g, b));
 
 	b = 1 - 1 / 255 * Math.max(r, Math.max(g, b));
 
@@ -145,13 +148,13 @@ convert.rgb.hwb = function (rgb) {
 };
 
 convert.rgb.cmyk = function (rgb) {
-	var r = rgb[0] / 255;
-	var g = rgb[1] / 255;
-	var b = rgb[2] / 255;
-	var c;
-	var m;
-	var y;
-	var k;
+	let r = rgb[0] / 255;
+	let g = rgb[1] / 255;
+	let b = rgb[2] / 255;
+	let c;
+	let m;
+	let y;
+	let k;
 
 	k = Math.min(1 - r, 1 - g, 1 - b);
 	c = (1 - r - k) / (1 - k) || 0;
@@ -173,20 +176,20 @@ function comparativeDistance(x, y) {
 }
 
 convert.rgb.keyword = function (rgb) {
-	var reversed = reverseKeywords[rgb];
+	let reversed = reverseKeywords[rgb];
 	if (reversed) {
 		return reversed;
 	}
 
-	var currentClosestDistance = Infinity;
-	var currentClosestKeyword;
+	let currentClosestDistance = Infinity;
+	let currentClosestKeyword;
 
-	for (var keyword in cssKeywords) {
+	for (let keyword in cssKeywords) {
 		if (cssKeywords.hasOwnProperty(keyword)) {
-			var value = cssKeywords[keyword];
+			let value = cssKeywords[keyword];
 
 			// Compute comparative distance
-			var distance = comparativeDistance(rgb, value);
+			let distance = comparativeDistance(rgb, value);
 
 			// Check if its less, if so set as closest
 			if (distance < currentClosestDistance) {
@@ -203,31 +206,57 @@ convert.keyword.rgb = function (keyword) {
 	return cssKeywords[keyword];
 };
 
+/**
+ * Convert RBG to color class
+ * @param rgb
+ * @returns {*}
+ */
+convert.rgb.keyword16 = function (rgb) {
+	let currentClosestDistance = Infinity;
+  let currentClosestKeyword;
+
+  for (let keyword in cssKeywords) {
+    if (cssKeywords.hasOwnProperty(keyword) && colors16.indexOf(keyword) > -1) {
+      let value = cssKeywords[keyword];
+
+      // Compute comparative distance
+      let distance = comparativeDistance(rgb, value);
+
+      // Check if its less, if so set as closest
+      if (distance < currentClosestDistance) {
+        currentClosestDistance = distance;
+        currentClosestKeyword = keyword;
+      }
+    }
+  }
+  return currentClosestKeyword;
+};
+
 convert.rgb.xyz = function (rgb) {
-	var r = rgb[0] / 255;
-	var g = rgb[1] / 255;
-	var b = rgb[2] / 255;
+	let r = rgb[0] / 255;
+	let g = rgb[1] / 255;
+	let b = rgb[2] / 255;
 
 	// assume sRGB
 	r = r > 0.04045 ? Math.pow(((r + 0.055) / 1.055), 2.4) : (r / 12.92);
 	g = g > 0.04045 ? Math.pow(((g + 0.055) / 1.055), 2.4) : (g / 12.92);
 	b = b > 0.04045 ? Math.pow(((b + 0.055) / 1.055), 2.4) : (b / 12.92);
 
-	var x = (r * 0.4124) + (g * 0.3576) + (b * 0.1805);
-	var y = (r * 0.2126) + (g * 0.7152) + (b * 0.0722);
-	var z = (r * 0.0193) + (g * 0.1192) + (b * 0.9505);
+	let x = (r * 0.4124) + (g * 0.3576) + (b * 0.1805);
+	let y = (r * 0.2126) + (g * 0.7152) + (b * 0.0722);
+	let z = (r * 0.0193) + (g * 0.1192) + (b * 0.9505);
 
 	return [x * 100, y * 100, z * 100];
 };
 
 convert.rgb.lab = function (rgb) {
-	var xyz = convert.rgb.xyz(rgb);
-	var x = xyz[0];
-	var y = xyz[1];
-	var z = xyz[2];
-	var l;
-	var a;
-	var b;
+	let xyz = convert.rgb.xyz(rgb);
+	let x = xyz[0];
+	let y = xyz[1];
+	let z = xyz[2];
+	let l;
+	let a;
+	let b;
 
 	x /= 95.047;
 	y /= 100;
@@ -245,14 +274,14 @@ convert.rgb.lab = function (rgb) {
 };
 
 convert.hsl.rgb = function (hsl) {
-	var h = hsl[0] / 360;
-	var s = hsl[1] / 100;
-	var l = hsl[2] / 100;
-	var t1;
-	var t2;
-	var t3;
-	var rgb;
-	var val;
+	let h = hsl[0] / 360;
+	let s = hsl[1] / 100;
+	let l = hsl[2] / 100;
+	let t1;
+	let t2;
+	let t3;
+	let rgb;
+	let val;
 
 	if (s === 0) {
 		val = l * 255;
@@ -268,7 +297,7 @@ convert.hsl.rgb = function (hsl) {
 	t1 = 2 * l - t2;
 
 	rgb = [0, 0, 0];
-	for (var i = 0; i < 3; i++) {
+	for (let i = 0; i < 3; i++) {
 		t3 = h + 1 / 3 * -(i - 1);
 		if (t3 < 0) {
 			t3++;
@@ -294,13 +323,13 @@ convert.hsl.rgb = function (hsl) {
 };
 
 convert.hsl.hsv = function (hsl) {
-	var h = hsl[0];
-	var s = hsl[1] / 100;
-	var l = hsl[2] / 100;
-	var smin = s;
-	var lmin = Math.max(l, 0.01);
-	var sv;
-	var v;
+	let h = hsl[0];
+	let s = hsl[1] / 100;
+	let l = hsl[2] / 100;
+	let smin = s;
+	let lmin = Math.max(l, 0.01);
+	let sv;
+	let v;
 
 	l *= 2;
 	s *= (l <= 1) ? l : 2 - l;
@@ -312,15 +341,15 @@ convert.hsl.hsv = function (hsl) {
 };
 
 convert.hsv.rgb = function (hsv) {
-	var h = hsv[0] / 60;
-	var s = hsv[1] / 100;
-	var v = hsv[2] / 100;
-	var hi = Math.floor(h) % 6;
+	let h = hsv[0] / 60;
+	let s = hsv[1] / 100;
+	let v = hsv[2] / 100;
+	let hi = Math.floor(h) % 6;
 
-	var f = h - Math.floor(h);
-	var p = 255 * v * (1 - s);
-	var q = 255 * v * (1 - (s * f));
-	var t = 255 * v * (1 - (s * (1 - f)));
+	let f = h - Math.floor(h);
+	let p = 255 * v * (1 - s);
+	let q = 255 * v * (1 - (s * f));
+	let t = 255 * v * (1 - (s * (1 - f)));
 	v *= 255;
 
 	switch (hi) {
@@ -340,13 +369,13 @@ convert.hsv.rgb = function (hsv) {
 };
 
 convert.hsv.hsl = function (hsv) {
-	var h = hsv[0];
-	var s = hsv[1] / 100;
-	var v = hsv[2] / 100;
-	var vmin = Math.max(v, 0.01);
-	var lmin;
-	var sl;
-	var l;
+	let h = hsv[0];
+	let s = hsv[1] / 100;
+	let v = hsv[2] / 100;
+	let vmin = Math.max(v, 0.01);
+	let lmin;
+	let sl;
+	let l;
 
 	l = (2 - s) * v;
 	lmin = (2 - s) * vmin;
@@ -360,14 +389,14 @@ convert.hsv.hsl = function (hsv) {
 
 // http://dev.w3.org/csswg/css-color/#hwb-to-rgb
 convert.hwb.rgb = function (hwb) {
-	var h = hwb[0] / 360;
-	var wh = hwb[1] / 100;
-	var bl = hwb[2] / 100;
-	var ratio = wh + bl;
-	var i;
-	var v;
-	var f;
-	var n;
+	let h = hwb[0] / 360;
+	let wh = hwb[1] / 100;
+	let bl = hwb[2] / 100;
+	let ratio = wh + bl;
+	let i;
+	let v;
+	let f;
+	let n;
 
 	// wh + bl cant be > 1
 	if (ratio > 1) {
@@ -385,9 +414,9 @@ convert.hwb.rgb = function (hwb) {
 
 	n = wh + f * (v - wh); // linear interpolation
 
-	var r;
-	var g;
-	var b;
+	let r;
+	let g;
+	let b;
 	switch (i) {
 		default:
 		case 6:
@@ -403,13 +432,13 @@ convert.hwb.rgb = function (hwb) {
 };
 
 convert.cmyk.rgb = function (cmyk) {
-	var c = cmyk[0] / 100;
-	var m = cmyk[1] / 100;
-	var y = cmyk[2] / 100;
-	var k = cmyk[3] / 100;
-	var r;
-	var g;
-	var b;
+	let c = cmyk[0] / 100;
+	let m = cmyk[1] / 100;
+	let y = cmyk[2] / 100;
+	let k = cmyk[3] / 100;
+	let r;
+	let g;
+	let b;
 
 	r = 1 - Math.min(1, c * (1 - k) + k);
 	g = 1 - Math.min(1, m * (1 - k) + k);
@@ -419,12 +448,12 @@ convert.cmyk.rgb = function (cmyk) {
 };
 
 convert.xyz.rgb = function (xyz) {
-	var x = xyz[0] / 100;
-	var y = xyz[1] / 100;
-	var z = xyz[2] / 100;
-	var r;
-	var g;
-	var b;
+	let x = xyz[0] / 100;
+	let y = xyz[1] / 100;
+	let z = xyz[2] / 100;
+	let r;
+	let g;
+	let b;
 
 	r = (x * 3.2406) + (y * -1.5372) + (z * -0.4986);
 	g = (x * -0.9689) + (y * 1.8758) + (z * 0.0415);
@@ -451,12 +480,12 @@ convert.xyz.rgb = function (xyz) {
 };
 
 convert.xyz.lab = function (xyz) {
-	var x = xyz[0];
-	var y = xyz[1];
-	var z = xyz[2];
-	var l;
-	var a;
-	var b;
+	let x = xyz[0];
+	let y = xyz[1];
+	let z = xyz[2];
+	let l;
+	let a;
+	let b;
 
 	x /= 95.047;
 	y /= 100;
@@ -474,20 +503,20 @@ convert.xyz.lab = function (xyz) {
 };
 
 convert.lab.xyz = function (lab) {
-	var l = lab[0];
-	var a = lab[1];
-	var b = lab[2];
-	var x;
-	var y;
-	var z;
+	let l = lab[0];
+	let a = lab[1];
+	let b = lab[2];
+	let x;
+	let y;
+	let z;
 
 	y = (l + 16) / 116;
 	x = a / 500 + y;
 	z = y - b / 200;
 
-	var y2 = Math.pow(y, 3);
-	var x2 = Math.pow(x, 3);
-	var z2 = Math.pow(z, 3);
+	let y2 = Math.pow(y, 3);
+	let x2 = Math.pow(x, 3);
+	let z2 = Math.pow(z, 3);
 	y = y2 > 0.008856 ? y2 : (y - 16 / 116) / 7.787;
 	x = x2 > 0.008856 ? x2 : (x - 16 / 116) / 7.787;
 	z = z2 > 0.008856 ? z2 : (z - 16 / 116) / 7.787;
@@ -500,12 +529,12 @@ convert.lab.xyz = function (lab) {
 };
 
 convert.lab.lch = function (lab) {
-	var l = lab[0];
-	var a = lab[1];
-	var b = lab[2];
-	var hr;
-	var h;
-	var c;
+	let l = lab[0];
+	let a = lab[1];
+	let b = lab[2];
+	let hr;
+	let h;
+	let c;
 
 	hr = Math.atan2(b, a);
 	h = hr * 360 / 2 / Math.PI;
@@ -520,12 +549,12 @@ convert.lab.lch = function (lab) {
 };
 
 convert.lch.lab = function (lch) {
-	var l = lch[0];
-	var c = lch[1];
-	var h = lch[2];
-	var a;
-	var b;
-	var hr;
+	let l = lch[0];
+	let c = lch[1];
+	let h = lch[2];
+	let a;
+	let b;
+	let hr;
 
 	hr = h / 360 * 2 * Math.PI;
 	a = c * Math.cos(hr);
@@ -535,10 +564,10 @@ convert.lch.lab = function (lch) {
 };
 
 convert.rgb.ansi16 = function (args) {
-	var r = args[0];
-	var g = args[1];
-	var b = args[2];
-	var value = 1 in arguments ? arguments[1] : convert.rgb.hsv(args)[2]; // hsv -> ansi16 optimization
+	let r = args[0];
+	let g = args[1];
+	let b = args[2];
+	let value = 1 in arguments ? arguments[1] : convert.rgb.hsv(args)[2]; // hsv -> ansi16 optimization
 
 	value = Math.round(value / 50);
 
@@ -546,7 +575,7 @@ convert.rgb.ansi16 = function (args) {
 		return 30;
 	}
 
-	var ansi = 30
+	let ansi = 30
 		+ ((Math.round(b / 255) << 2)
 		| (Math.round(g / 255) << 1)
 		| Math.round(r / 255));
@@ -565,9 +594,9 @@ convert.hsv.ansi16 = function (args) {
 };
 
 convert.rgb.ansi256 = function (args) {
-	var r = args[0];
-	var g = args[1];
-	var b = args[2];
+	let r = args[0];
+	let g = args[1];
+	let b = args[2];
 
 	// we use the extended greyscale palette here, with the exception of
 	// black and white. normal palette only has 4 greyscale shades.
@@ -583,7 +612,7 @@ convert.rgb.ansi256 = function (args) {
 		return Math.round(((r - 8) / 247) * 24) + 232;
 	}
 
-	var ansi = 16
+	let ansi = 16
 		+ (36 * Math.round(r / 255 * 5))
 		+ (6 * Math.round(g / 255 * 5))
 		+ Math.round(b / 255 * 5);
@@ -592,7 +621,7 @@ convert.rgb.ansi256 = function (args) {
 };
 
 convert.ansi16.rgb = function (args) {
-	var color = args % 10;
+	let color = args % 10;
 
 	// handle greyscale
 	if (color === 0 || color === 7) {
@@ -605,10 +634,10 @@ convert.ansi16.rgb = function (args) {
 		return [color, color, color];
 	}
 
-	var mult = (~~(args > 50) + 1) * 0.5;
-	var r = ((color & 1) * mult) * 255;
-	var g = (((color >> 1) & 1) * mult) * 255;
-	var b = (((color >> 2) & 1) * mult) * 255;
+	let mult = (~~(args > 50) + 1) * 0.5;
+	let r = ((color & 1) * mult) * 255;
+	let g = (((color >> 1) & 1) * mult) * 255;
+	let b = (((color >> 2) & 1) * mult) * 255;
 
 	return [r, g, b];
 };
@@ -616,36 +645,36 @@ convert.ansi16.rgb = function (args) {
 convert.ansi256.rgb = function (args) {
 	// handle greyscale
 	if (args >= 232) {
-		var c = (args - 232) * 10 + 8;
+		let c = (args - 232) * 10 + 8;
 		return [c, c, c];
 	}
 
 	args -= 16;
 
-	var rem;
-	var r = Math.floor(args / 36) / 5 * 255;
-	var g = Math.floor((rem = args % 36) / 6) / 5 * 255;
-	var b = (rem % 6) / 5 * 255;
+	let rem;
+	let r = Math.floor(args / 36) / 5 * 255;
+	let g = Math.floor((rem = args % 36) / 6) / 5 * 255;
+	let b = (rem % 6) / 5 * 255;
 
 	return [r, g, b];
 };
 
 convert.rgb.hex = function (args) {
-	var integer = ((Math.round(args[0]) & 0xFF) << 16)
+	let integer = ((Math.round(args[0]) & 0xFF) << 16)
 		+ ((Math.round(args[1]) & 0xFF) << 8)
 		+ (Math.round(args[2]) & 0xFF);
 
-	var string = integer.toString(16).toUpperCase();
+	let string = integer.toString(16).toUpperCase();
 	return '000000'.substring(string.length) + string;
 };
 
 convert.hex.rgb = function (args) {
-	var match = args.toString(16).match(/[a-f0-9]{6}|[a-f0-9]{3}/i);
+	let match = args.toString(16).match(/[a-f0-9]{6}|[a-f0-9]{3}/i);
 	if (!match) {
 		return [0, 0, 0];
 	}
 
-	var colorString = match[0];
+	let colorString = match[0];
 
 	if (match[0].length === 3) {
 		colorString = colorString.split('').map(function (char) {
@@ -653,23 +682,23 @@ convert.hex.rgb = function (args) {
 		}).join('');
 	}
 
-	var integer = parseInt(colorString, 16);
-	var r = (integer >> 16) & 0xFF;
-	var g = (integer >> 8) & 0xFF;
-	var b = integer & 0xFF;
+	let integer = parseInt(colorString, 16);
+	let r = (integer >> 16) & 0xFF;
+	let g = (integer >> 8) & 0xFF;
+	let b = integer & 0xFF;
 
 	return [r, g, b];
 };
 
 convert.rgb.hcg = function (rgb) {
-	var r = rgb[0] / 255;
-	var g = rgb[1] / 255;
-	var b = rgb[2] / 255;
-	var max = Math.max(Math.max(r, g), b);
-	var min = Math.min(Math.min(r, g), b);
-	var chroma = (max - min);
-	var grayscale;
-	var hue;
+	let r = rgb[0] / 255;
+	let g = rgb[1] / 255;
+	let b = rgb[2] / 255;
+	let max = Math.max(Math.max(r, g), b);
+	let min = Math.min(Math.min(r, g), b);
+	let chroma = (max - min);
+	let grayscale;
+	let hue;
 
 	if (chroma < 1) {
 		grayscale = min / (1 - chroma);
@@ -696,10 +725,10 @@ convert.rgb.hcg = function (rgb) {
 };
 
 convert.hsl.hcg = function (hsl) {
-	var s = hsl[1] / 100;
-	var l = hsl[2] / 100;
-	var c = 1;
-	var f = 0;
+	let s = hsl[1] / 100;
+	let l = hsl[2] / 100;
+	let c = 1;
+	let f = 0;
 
 	if (l < 0.5) {
 		c = 2.0 * s * l;
@@ -715,11 +744,11 @@ convert.hsl.hcg = function (hsl) {
 };
 
 convert.hsv.hcg = function (hsv) {
-	var s = hsv[1] / 100;
-	var v = hsv[2] / 100;
+	let s = hsv[1] / 100;
+	let v = hsv[2] / 100;
 
-	var c = s * v;
-	var f = 0;
+	let c = s * v;
+	let f = 0;
 
 	if (c < 1.0) {
 		f = (v - c) / (1 - c);
@@ -729,19 +758,19 @@ convert.hsv.hcg = function (hsv) {
 };
 
 convert.hcg.rgb = function (hcg) {
-	var h = hcg[0] / 360;
-	var c = hcg[1] / 100;
-	var g = hcg[2] / 100;
+	let h = hcg[0] / 360;
+	let c = hcg[1] / 100;
+	let g = hcg[2] / 100;
 
 	if (c === 0.0) {
 		return [g * 255, g * 255, g * 255];
 	}
 
-	var pure = [0, 0, 0];
-	var hi = (h % 1) * 6;
-	var v = hi % 1;
-	var w = 1 - v;
-	var mg = 0;
+	let pure = [0, 0, 0];
+	let hi = (h % 1) * 6;
+	let v = hi % 1;
+	let w = 1 - v;
+	let mg = 0;
 
 	switch (Math.floor(hi)) {
 		case 0:
@@ -768,11 +797,11 @@ convert.hcg.rgb = function (hcg) {
 };
 
 convert.hcg.hsv = function (hcg) {
-	var c = hcg[1] / 100;
-	var g = hcg[2] / 100;
+	let c = hcg[1] / 100;
+	let g = hcg[2] / 100;
 
-	var v = c + g * (1.0 - c);
-	var f = 0;
+	let v = c + g * (1.0 - c);
+	let f = 0;
 
 	if (v > 0.0) {
 		f = c / v;
@@ -782,11 +811,11 @@ convert.hcg.hsv = function (hcg) {
 };
 
 convert.hcg.hsl = function (hcg) {
-	var c = hcg[1] / 100;
-	var g = hcg[2] / 100;
+	let c = hcg[1] / 100;
+	let g = hcg[2] / 100;
 
-	var l = g * (1.0 - c) + 0.5 * c;
-	var s = 0;
+	let l = g * (1.0 - c) + 0.5 * c;
+	let s = 0;
 
 	if (l > 0.0 && l < 0.5) {
 		s = c / (2 * l);
@@ -799,18 +828,18 @@ convert.hcg.hsl = function (hcg) {
 };
 
 convert.hcg.hwb = function (hcg) {
-	var c = hcg[1] / 100;
-	var g = hcg[2] / 100;
-	var v = c + g * (1.0 - c);
+	let c = hcg[1] / 100;
+	let g = hcg[2] / 100;
+	let v = c + g * (1.0 - c);
 	return [hcg[0], (v - c) * 100, (1 - v) * 100];
 };
 
 convert.hwb.hcg = function (hwb) {
-	var w = hwb[1] / 100;
-	var b = hwb[2] / 100;
-	var v = 1 - b;
-	var c = v - w;
-	var g = 0;
+	let w = hwb[1] / 100;
+	let b = hwb[2] / 100;
+	let v = 1 - b;
+	let c = v - w;
+	let g = 0;
 
 	if (c < 1) {
 		g = (v - c) / (1 - c);
@@ -848,14 +877,14 @@ convert.gray.lab = function (gray) {
 };
 
 convert.gray.hex = function (gray) {
-	var val = Math.round(gray[0] / 100 * 255) & 0xFF;
-	var integer = (val << 16) + (val << 8) + val;
+	let val = Math.round(gray[0] / 100 * 255) & 0xFF;
+	let integer = (val << 16) + (val << 8) + val;
 
-	var string = integer.toString(16).toUpperCase();
+	let string = integer.toString(16).toUpperCase();
 	return '000000'.substring(string.length) + string;
 };
 
 convert.rgb.gray = function (rgb) {
-	var val = (rgb[0] + rgb[1] + rgb[2]) / 3;
+	let val = (rgb[0] + rgb[1] + rgb[2]) / 3;
 	return [val / 255 * 100];
 };
